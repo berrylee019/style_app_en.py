@@ -59,7 +59,7 @@ if uploaded_video is not None:
                         # 1. Gemini 영상 업로드
                         sample_file = genai.upload_file(path=video_path)
                         
-                        # 2. 영상이 'ACTIVE' 상태가 될 때까지 대기 (핵심 추가!)
+                        # 2. 영상이 'ACTIVE' 상태가 될 때까지 대기
                         with st.spinner("Processing video for AI analysis..."):
                             while sample_file.state.name == "PROCESSING":
                                 time.sleep(2)
@@ -68,7 +68,7 @@ if uploaded_video is not None:
                             if sample_file.state.name == "FAILED":
                                 raise Exception("Video processing failed.")
         
-                        # 3. 이제 분석 시작
+                        # 3. 분석 시작
                         prompt = """
                         Analyze the style of the person in this video. 
                         Provide the result in the following JSON format ONLY:
@@ -83,46 +83,45 @@ if uploaded_video is not None:
                         }
                         """
                         response = model.generate_content([prompt, sample_file])
-                
-                # JSON 파싱 (AI 응답에서 데이터 추출)
-                # 응답에서 JSON 부분만 추출하기 위한 처리
-                raw_text = response.text.replace('```json', '').replace('```', '').strip()
-                data = json.loads(raw_text)
-
-                st.balloons()
-                st.success("Analysis Complete!")
-
-                # 6. Results Section (AI 데이터 반영)
-                st.markdown("---")
-                st.header("📊 Your Personal Style Report")
-                
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.markdown(f'''<div class="report-card">
-                        <h3>🎨 Color Palette</h3>
-                        <p><strong>{data['color_palette']}</strong></p>
-                        <small>{data['color_desc']}</small>
-                    </div>''', unsafe_allow_html=True)
-
-                with col2:
-                    st.markdown(f'''<div class="report-card">
-                        <h3>⌛ Body Type</h3>
-                        <p><strong>{data['body_type']}</strong></p>
-                        <small>{data['body_desc']}</small>
-                    </div>''', unsafe_allow_html=True)
-
-                # 7. AI Curation / Styling Tips
-                with st.expander("💡 Pro Styling Tips for You"):
-                    st.write(f"**Wardrobe Essentials:** {data['essentials']}")
-                    st.write(f"**Colors to Avoid:** {data['avoid']}")
-                    st.write(f"**Accessory Pick:** {data['accessory']}")
-
-            except Exception as e:
-                st.error(f"Analysis failed. Please try again. (Error: {e})")
-            finally:
-                if os.path.exists(video_path):
-                    os.remove(video_path)
+                        
+                        # 4. 결과 텍스트 정제 및 JSON 파싱
+                        raw_text = response.text.replace('```json', '').replace('```', '').strip()
+                        data = json.loads(raw_text)
+        
+                        st.balloons()
+                        st.success("Analysis Complete!")
+        
+                        # 5. Results Section
+                        st.markdown("---")
+                        st.header("📊 Your Personal Style Report")
+                        
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            st.markdown(f'''<div class="report-card">
+                                <h3>🎨 Color Palette</h3>
+                                <p><strong>{data['color_palette']}</strong></p>
+                                <small>{data['color_desc']}</small>
+                            </div>''', unsafe_allow_html=True)
+        
+                        with col2:
+                            st.markdown(f'''<div class="report-card">
+                                <h3>⌛ Body Type</h3>
+                                <p><strong>{data['body_type']}</strong></p>
+                                <small>{data['body_desc']}</small>
+                            </div>''', unsafe_allow_html=True)
+        
+                        # 6. Styling Tips
+                        with st.expander("💡 Pro Styling Tips for You"):
+                            st.write(f"**Wardrobe Essentials:** {data['essentials']}")
+                            st.write(f"**Colors to Avoid:** {data['avoid']}")
+                            st.write(f"**Accessory Pick:** {data['accessory']}")
+        
+                    except Exception as e:
+                        st.error(f"Analysis failed. Please try again. (Error: {e})")
+                    finally:
+                        if os.path.exists(video_path):
+                            os.remove(video_path)
 
 # 8. Footer & Banner (기존과 동일)
 st.divider()
@@ -133,4 +132,5 @@ st.markdown("""
     <a href="https://bw-chef.streamlit.app" target="_blank" style="display: inline-block; background: #ffffff; color: #111827; padding: 12px 25px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">Try Chef Noir AI 🚀</a>
 </div>
 """, unsafe_allow_html=True)
+
 
