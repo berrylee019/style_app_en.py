@@ -111,11 +111,15 @@ if uploaded_video is not None:
                         <small>{data['body_desc']}</small>
                     </div>''', unsafe_allow_html=True)
 
-                # 7. Styling Tips
+                # 7. Styling Tips (깔끔하게 다듬은 버전)
                 with st.expander("💡 Pro Styling Tips for You"):
-                    st.write(f"**Wardrobe Essentials:** {data['essentials']}")
-                    st.write(f"**Colors to Avoid:** {data['avoid']}")
-                    st.write(f"**Accessory Pick:** {data['accessory']}")
+                    # 리스트 형태의 텍스트를 깔끔한 문장으로 변환
+                    essentials = ", ".join(data['essentials']) if isinstance(data['essentials'], list) else data['essentials']
+                    avoid = ", ".join(data['avoid']) if isinstance(data['avoid'], list) else data['avoid']
+                    
+                    st.write(f"**✅ Wardrobe Essentials:** {essentials}")
+                    st.write(f"**❌ Colors to Avoid:** {avoid}")
+                    st.write(f"**✨ Accessory Pick:** {data['accessory']}")
 
             except Exception as e:
                 st.error(f"Analysis failed. Please try again. (Error: {e})")
@@ -135,4 +139,5 @@ st.markdown("""
 
 # 9. Footer
 st.markdown("<br><p style='text-align: center; color: #a0aec0; font-size: 0.8rem;'>© 2026 StyleScan Global | Powered by Quantum AI Lifestyle</p>", unsafe_allow_html=True)
+
 
