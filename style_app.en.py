@@ -3,6 +3,7 @@ import google.generativeai as genai
 import tempfile
 import os
 import json
+import time
 
 # 1. Page Configuration
 st.set_page_config(
@@ -11,10 +12,10 @@ st.set_page_config(
     layout="centered"
 )
 
-# 2. AI Model Setup (Secrets에서 API 키 호출)
+# 2. AI Model Setup
 try:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-    model = genai.GenerativeModel('gemini-2.5-flash')
+    model = genai.GenerativeModel('gemini-1.5-flash')
 except Exception as e:
     st.error("API Key is missing or invalid. Please check your Streamlit Secrets.")
 
@@ -50,80 +51,79 @@ if uploaded_video is not None:
     
     if st.button("Generate My Style Report"):
         with st.spinner("🧠 AI is analyzing your style from the video..."):
-            # 임시 파일 생성 및 영상 처리
+            # Create temporary file
             with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tfile:
                 tfile.write(uploaded_video.read())
                 video_path = tfile.name
 
-        try:
-                        # 1. Gemini 영상 업로드
-                        sample_file = genai.upload_file(path=video_path)
-                        
-                        # 2. 영상이 'ACTIVE' 상태가 될 때까지 대기
-                        with st.spinner("Processing video for AI analysis..."):
-                            while sample_file.state.name == "PROCESSING":
-                                time.sleep(2)
-                                sample_file = genai.get_file(sample_file.name)
-                            
-                            if sample_file.state.name == "FAILED":
-                                raise Exception("Video processing failed.")
-        
-                        # 3. 분석 시작
-                        prompt = """
-                        Analyze the style of the person in this video. 
-                        Provide the result in the following JSON format ONLY:
-                        {
-                            "color_palette": "Name of Palette",
-                            "color_desc": "Brief explanation",
-                            "body_type": "Name of Body Shape",
-                            "body_desc": "Brief explanation",
-                            "essentials": "List 3 items",
-                            "avoid": "List 3 items",
-                            "accessory": "Recommendation"
-                        }
-                        """
-                        response = model.generate_content([prompt, sample_file])
-                        
-                        # 4. 결과 텍스트 정제 및 JSON 파싱
-                        raw_text = response.text.replace('```json', '').replace('```', '').strip()
-                        data = json.loads(raw_text)
-        
-                        st.balloons()
-                        st.success("Analysis Complete!")
-        
-                        # 5. Results Section
-                        st.markdown("---")
-                        st.header("📊 Your Personal Style Report")
-                        
-                        col1, col2 = st.columns(2)
-                        
-                        with col1:
-                            st.markdown(f'''<div class="report-card">
-                                <h3>🎨 Color Palette</h3>
-                                <p><strong>{data['color_palette']}</strong></p>
-                                <small>{data['color_desc']}</small>
-                            </div>''', unsafe_allow_html=True)
-        
-                        with col2:
-                            st.markdown(f'''<div class="report-card">
-                                <h3>⌛ Body Type</h3>
-                                <p><strong>{data['body_type']}</strong></p>
-                                <small>{data['body_desc']}</small>
-                            </div>''', unsafe_allow_html=True)
-        
-                        # 6. Styling Tips
-                        with st.expander("💡 Pro Styling Tips for You"):
-                            st.write(f"**Wardrobe Essentials:** {data['essentials']}")
-                            st.write(f"**Colors to Avoid:** {data['avoid']}")
-                            st.write(f"**Accessory Pick:** {data['accessory']}")
-        
-                    except Exception as e:
-                        st.error(f"Analysis failed. Please try again. (Error: {e})")
-                    finally:
-                        if os.path.exists(video_path):
-                            os.remove(video_path)
+            try:
+                # Gemini Video Upload
+                sample_file = genai.upload_file(path=video_path)
+                
+                # Wait for video to be processed
+                while sample_file.state.name == "PROCESSING":
+                    time.sleep(2)
+                    sample_file = genai.get_file(sample_file.name)
+                
+                if sample_file.state.name == "FAILED":
+                    raise Exception("Video processing failed.")
 
-# 8. Footer & Banner (기존과 동일)
+                # AI Prompt
+                prompt = """
+                Analyze the style of the person in this video. 
+                Provide the result in the following JSON format ONLY:
+                {
+                    "color_palette": "Name of Palette",
+                    "color_desc": "Brief explanation",
+                    "body_type": "Name of Body Shape",
+                    "body_desc": "Brief explanation",
+                    "essentials": "List 3 items",
+                    "avoid": "List 3 items",
+                    "accessory": "Recommendation"
+                }
+                """
+                response = model.generate_content([prompt, sample_file])
+                
+                # Parse JSON
+                raw_text = response.text.replace('```json', '').replace('```', '').strip()
+                data = json.loads(raw_text)
+
+                st.balloons()
+                st.success("Analysis Complete!")
+
+                # 6. Results Section
+                st.markdown("---")
+                st.header("📊 Your Personal Style Report")
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.markdown(f'''<div class="report-card">
+                        <h3>🎨 Color Palette</h3>
+                        <p><strong>{data['color_palette']}</strong></p>
+                        <small>{data['color_desc']}</small>
+                    </div>''', unsafe_allow_html=True)
+
+                with col2:
+                    st.markdown(f'''<div class="report-card">
+                        <h3>⌛ Body Type</h3>
+                        <p><strong>{data['body_type']}</strong></p>
+                        <small>{data['body_desc']}</small>
+                    </div>''', unsafe_allow_html=True)
+
+                # 7. Styling Tips
+                with st.expander("💡 Pro Styling Tips for You"):
+                    st.write(f"**Wardrobe Essentials:** {data['essentials']}")
+                    st.write(f"**Colors to Avoid:** {data['avoid']}")
+                    st.write(f"**Accessory Pick:** {data['accessory']}")
+
+            except Exception as e:
+                st.error(f"Analysis failed. Please try again. (Error: {e})")
+            finally:
+                if os.path.exists(video_path):
+                    os.remove(video_path)
+
+# 8. Global Cross-Promotion Banner
 st.divider()
 st.markdown("""
 <div style="background: linear-gradient(135deg, #111827, #374151); padding: 30px; border-radius: 20px; color: white; text-align: center;">
@@ -133,4 +133,5 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-
+# 9. Footer
+st.markdown("<br><p style='text-align: center; color: #a0aec0; font-size: 0.8rem;'>© 2026 StyleScan Global | Powered by Quantum AI Lifestyle</p>", unsafe_allow_html=True)
