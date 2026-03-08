@@ -15,7 +15,7 @@ st.set_page_config(
 # 2. AI Model Setup
 try:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-2.5-flash')
 except Exception as e:
     st.error("API Key is missing or invalid. Please check your Streamlit Secrets.")
 
@@ -133,4 +133,5 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # 8. Footer
+
 st.markdown("<br><p style='text-align: center; color: #718096; font-size: 0.8rem;'>© 2026 Chef Noir Global | Powered by Quantum AI Lifestyle</p>", unsafe_allow_html=True)
