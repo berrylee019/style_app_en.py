@@ -133,11 +133,12 @@ st.markdown("""
 <div style="background: linear-gradient(135deg, #111827, #374151); padding: 30px; border-radius: 20px; color: white; text-align: center;">
     <h3 style="margin: 0; color: #fbbf24;">👨‍🍳 Hungry for more AI?</h3>
     <p style="margin: 10px 0 20px; opacity: 0.9;">Turn your fridge leftovers into a Masterpiece with our <b>AI Master Chef</b>.</p>
-    <a href="https://bw-chef.streamlit.app" target="_blank" style="display: inline-block; background: #ffffff; color: #111827; padding: 12px 25px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">Try Chef Noir AI 🚀</a>
+    <a href="https://chef-noir.streamlit.app" target="_blank" style="display: inline-block; background: #ffffff; color: #111827; padding: 12px 25px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">Try Chef Noir AI 🚀</a>
 </div>
 """, unsafe_allow_html=True)
 
 # 9. Footer
 st.markdown("<br><p style='text-align: center; color: #a0aec0; font-size: 0.8rem;'>© 2026 StyleScan Global | Powered by Quantum AI Lifestyle</p>", unsafe_allow_html=True)
+
 
 
