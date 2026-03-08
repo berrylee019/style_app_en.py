@@ -55,25 +55,34 @@ if uploaded_video is not None:
                 tfile.write(uploaded_video.read())
                 video_path = tfile.name
 
-            try:
-                # Gemini 영상 업로드 및 분석
-                sample_file = genai.upload_file(path=video_path)
-                
-                # AI에게 구조화된 응답을 요구하는 프롬프트
-                prompt = """
-                Analyze the style of the person in this video. 
-                Provide the result in the following JSON format ONLY:
-                {
-                    "color_palette": "Name of Palette (e.g. Warm Autumn)",
-                    "color_desc": "Brief explanation",
-                    "body_type": "Name of Body Shape",
-                    "body_desc": "Brief explanation",
-                    "essentials": "List 3 items",
-                    "avoid": "List 3 items",
-                    "accessory": "Recommendation"
-                }
-                """
-                response = model.generate_content([prompt, sample_file])
+        try:
+                        # 1. Gemini 영상 업로드
+                        sample_file = genai.upload_file(path=video_path)
+                        
+                        # 2. 영상이 'ACTIVE' 상태가 될 때까지 대기 (핵심 추가!)
+                        with st.spinner("Processing video for AI analysis..."):
+                            while sample_file.state.name == "PROCESSING":
+                                time.sleep(2)
+                                sample_file = genai.get_file(sample_file.name)
+                            
+                            if sample_file.state.name == "FAILED":
+                                raise Exception("Video processing failed.")
+        
+                        # 3. 이제 분석 시작
+                        prompt = """
+                        Analyze the style of the person in this video. 
+                        Provide the result in the following JSON format ONLY:
+                        {
+                            "color_palette": "Name of Palette",
+                            "color_desc": "Brief explanation",
+                            "body_type": "Name of Body Shape",
+                            "body_desc": "Brief explanation",
+                            "essentials": "List 3 items",
+                            "avoid": "List 3 items",
+                            "accessory": "Recommendation"
+                        }
+                        """
+                        response = model.generate_content([prompt, sample_file])
                 
                 # JSON 파싱 (AI 응답에서 데이터 추출)
                 # 응답에서 JSON 부분만 추출하기 위한 처리
@@ -124,3 +133,4 @@ st.markdown("""
     <a href="https://bw-chef.streamlit.app" target="_blank" style="display: inline-block; background: #ffffff; color: #111827; padding: 12px 25px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">Try Chef Noir AI 🚀</a>
 </div>
 """, unsafe_allow_html=True)
+
